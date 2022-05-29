@@ -15,20 +15,6 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
-function verifyJWT(req, res, next) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return res.status(401).send({ message: 'Unauthorized access' });
-    }
-    const token = authHeader.split(' ')[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
-        if (err) {
-            return res.status(403).send({ message: 'Forbidden access' });
-        }
-        req.decoded = decoded;
-        next();
-    });
-}
 
 
 
@@ -63,6 +49,7 @@ try{
         res.send(product);
     });
 
+
     // get product api from database
     app.get('/product', async (req, res) => {
         const query = {};
@@ -72,12 +59,13 @@ try{
 
 
     // delete product api
-    app.delete('/product/:email', verifyJWT, verifyAdmin, async (req, res) => {
+    app.delete('/product/:email', async (req, res) => {
         const email = req.params.email;
         const filter = { email: email };
         const result = await toolCollection.deleteOne(filter);
         res.send(result);
     });
+
 
     // get product api by id from database
     app.get('/product/:id', async (req, res) => {
@@ -87,12 +75,14 @@ try{
         res.send(product);
     });
 
+    
     // post review api
     app.post('/review', async (req, res) => {
         const query = req.body;
         const review = await reviewCollection.insertOne(query);
         res.send(review);
     });
+
 
     // get review api
     app.get('/review', async (req, res) => {
@@ -101,6 +91,7 @@ try{
         res.send(review);
     });
 
+
     // order post api
     app.post('/order', async (req, res) => {
         const order = req.body;
@@ -108,14 +99,16 @@ try{
         res.send(result);
     });
 
-    app.get('/order', verifyJWT, async (req, res) => {
+
+    app.get('/order',  async (req, res) => {
         const query = {};
         const orders = await orderColletion.find(query).toArray();
         res.send(orders);
     });
 
+
     // order collection by email
-    app.get('/order', verifyJWT, async (req, res) => {
+    app.get('/order', async (req, res) => {
         const customer = req.query.customer;
         const decodedEamil = req.decoded.email;
         if (customer === decodedEamil) {
@@ -130,10 +123,11 @@ try{
     });
 
     // laod users inforamtion on dashboard
-    app.get('/user', verifyJWT, async (req, res) => {
+    app.get('/user',  async (req, res) => {
         const users = await userColletion.find().toArray();
         res.send(users);
     })
+
 
     app.get('/admin/:email', async (req, res) => {
         const email = req.params.email;
@@ -142,7 +136,8 @@ try{
         res.send({ admin: isAdmin });
     })
 
-    app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+    
+    app.put('/user/admin/:email', async (req, res) => {
         const email = req.params.email;
         const filter = { email: email };
         const updateDoc = {
